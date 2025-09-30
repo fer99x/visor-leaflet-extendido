@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor Geográfico con Leaflet</title>
+  
+  <!-- Leaflet CSS -->
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+    crossorigin=""
+  />
+
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script 
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+    integrity="sha256-Vz8GqG6+9z8z3EV0ZtC0XoV+nMOsLw/Dl5tF0zjU/jk=" 
+    crossorigin="">
+  </script>
+
+  <script>
+    // Inicializar el mapa
+    var map = L.map('map').setView([23.6345, -102.5528], 5);
+
+    // ---- Capas base ----
+    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors'
+    });
+
+    var esriSat = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri &mdash; Source: Esri, Earthstar Geographics'
+    });
+
+    osm.addTo(map); // capa inicial
+
+    // ---- Capa de marcador ----
+    var marker = L.marker([19.4326, -99.1332]).bindPopup("📍 Ciudad de México");
+    marker.addTo(map);
+
+    // ---- Capa GeoJSON (ejemplo simple con un polígono) ----
+    var geojsonFeature = {
+      "type": "Feature",
+      "properties": { "nombre": "Área de ejemplo" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-99.3, 19.4],
+          [-99.0, 19.4],
+          [-99.0, 19.6],
+          [-99.3, 19.6],
+          [-99.3, 19.4]
+        ]]
+      }
+    };
+
+    var geojsonLayer = L.geoJSON(geojsonFeature, {
+      style: { color: "red", weight: 2 },
+      onEachFeature: function (feature, layer) {
+        layer.bindPopup("Zona: " + feature.properties.nombre);
+      }
+    });
+
+    // ---- Control de capas ----
+    var baseMaps = {
+      "OpenStreetMap": osm,
+      "Satélite (ESRI)": esriSat
+    };
+
+    var overlayMaps = {
+      "Marcador CDMX": marker,
+      "Polígono ejemplo": geojsonLayer
+    };
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+  </script>
+</body>
+</html>
