@@ -49,24 +49,6 @@
     var marker = L.marker([19.4326, -99.1332]).bindPopup("📍 Ciudad de México");
     marker.addTo(map);
 
-    // ---- Cargar GeoJSON desde archivo externo ----
-    fetch("data/zonas.geojson")
-      .then(response => response.json())
-      .then(data => {
-        var geojsonLayer = L.geoJSON(data, {
-          style: { color: "red", weight: 2 },
-          onEachFeature: function (feature, layer) {
-            if (feature.properties && feature.properties.nombre) {
-              layer.bindPopup("Zona: " + feature.properties.nombre);
-            }
-          }
-        }).addTo(map);
-
-        // Ajusta la vista al GeoJSON
-        map.fitBounds(geojsonLayer.getBounds());
-      })
-      .catch(err => console.error("Error al cargar el GeoJSON:", err));
-
     // ---- Control de capas ----
     var baseMaps = {
       "OpenStreetMap": osm,
@@ -75,10 +57,36 @@
 
     var overlayMaps = {
       "Marcador CDMX": marker
-      // El GeoJSON se añadirá dinámicamente, puedes integrarlo aquí si lo prefieres
     };
 
-    L.control.layers(baseMaps, overlayMaps).addTo(map);
+    var layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    // ---- Función para cargar capas GeoJSON desde archivos ----
+    function cargarGeoJSON(url, nombre, estilo) {
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          var capa = L.geoJSON(data, {
+            style: estilo,
+            onEachFeature: function (feature, layer) {
+              if (feature.properties) {
+                let texto = Object.entries(feature.properties)
+                                  .map(([k, v]) => `<b>${k}</b>: ${v}`)
+                                  .join("<br>");
+                layer.bindPopup(texto);
+              }
+            }
+          });
+          layerControl.addOverlay(capa, nombre); // añadir al control
+          // No la activamos por defecto, queda como opcional
+        })
+        .catch(err => console.error("Error cargando " + nombre + ":", err));
+    }
+
+    // ---- Cargar múltiples capas GeoJSON ----
+    cargarGeoJSON("data/zonas.geojson", "Zonas", { color: "red", weight: 2 });
+    cargarGeoJSON("data/rios.geojson", "Ríos", { color: "blue", weight: 2 });
+    cargarGeoJSON("data/municipios.geojson", "Municipios", { color: "green", weight: 1 });
   </script>
 </body>
 </html>
