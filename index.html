@@ -45,32 +45,27 @@
 
     osm.addTo(map); // capa inicial
 
-    // ---- Capa de marcador ----
+    // ---- Marcador de ejemplo ----
     var marker = L.marker([19.4326, -99.1332]).bindPopup("📍 Ciudad de México");
     marker.addTo(map);
 
-    // ---- Capa GeoJSON (ejemplo simple con un polígono) ----
-    var geojsonFeature = {
-      "type": "Feature",
-      "properties": { "nombre": "Área de ejemplo" },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[
-          [-99.3, 19.4],
-          [-99.0, 19.4],
-          [-99.0, 19.6],
-          [-99.3, 19.6],
-          [-99.3, 19.4]
-        ]]
-      }
-    };
+    // ---- Cargar GeoJSON desde archivo externo ----
+    fetch("data/zonas.geojson")
+      .then(response => response.json())
+      .then(data => {
+        var geojsonLayer = L.geoJSON(data, {
+          style: { color: "red", weight: 2 },
+          onEachFeature: function (feature, layer) {
+            if (feature.properties && feature.properties.nombre) {
+              layer.bindPopup("Zona: " + feature.properties.nombre);
+            }
+          }
+        }).addTo(map);
 
-    var geojsonLayer = L.geoJSON(geojsonFeature, {
-      style: { color: "red", weight: 2 },
-      onEachFeature: function (feature, layer) {
-        layer.bindPopup("Zona: " + feature.properties.nombre);
-      }
-    });
+        // Ajusta la vista al GeoJSON
+        map.fitBounds(geojsonLayer.getBounds());
+      })
+      .catch(err => console.error("Error al cargar el GeoJSON:", err));
 
     // ---- Control de capas ----
     var baseMaps = {
@@ -79,8 +74,8 @@
     };
 
     var overlayMaps = {
-      "Marcador CDMX": marker,
-      "Polígono ejemplo": geojsonLayer
+      "Marcador CDMX": marker
+      // El GeoJSON se añadirá dinámicamente, puedes integrarlo aquí si lo prefieres
     };
 
     L.control.layers(baseMaps, overlayMaps).addTo(map);
